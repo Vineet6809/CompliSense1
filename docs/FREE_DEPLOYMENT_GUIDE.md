@@ -2,6 +2,8 @@
 
 This guide deploys the React interface and FastAPI/OCR backend together on **one free Render web service**, with **free Render PostgreSQL** and an **UptimeRobot free monitor**. No paid disk, paid web instance, or paid monitoring subscription is required.
 
+**Current setup status:** the private GitHub repository and free PostgreSQL database have been created. Render, GitHub, and UptimeRobot connections are active. Public web-service creation is waiting for Render's GitHub integration to receive access to `Vineet6809/CompliSense1`; Render currently rejects the repository as unfetchable. The CompliSense uptime monitor will be created after the actual public health URL exists. The complete app has passed a local login → real OCR → PDF/DOCX smoke test at `http://127.0.0.1:8011`.
+
 ## 1. Understand the free limits
 
 | Component | Configuration | Limit to plan around |

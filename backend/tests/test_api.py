@@ -89,6 +89,38 @@ def test_database_evidence_recovers_after_ephemeral_disk_loss(app):
     assert (directory / f"{image['id']}.original").read_bytes() == source
 
 
+def test_ocr_and_report_restore_evidence_after_disk_loss(app, monkeypatch):
+    from pathlib import Path
+
+    application, client = app
+    application.state.settings.evidence_in_database = True
+    login(client)
+    inspection = create_inspection(client)
+    result = client.post(
+        f"/api/inspections/{inspection['id']}/images",
+        files={"file": ("label.png", image_file(), "image/png")},
+    )
+    assert result.status_code == 201
+    directory = application.state.settings.data_dir / "images"
+
+    def scan_restored(path):
+        assert Path(path).is_file()
+        return {"lines": [], "ocr_text": "", "quality": {"warnings": []}}
+
+    monkeypatch.setattr(application.state.ocr, "scan", scan_restored)
+    for file in directory.iterdir():
+        file.unlink()
+    assert client.post(f"/api/inspections/{inspection['id']}/analyze").status_code == 200
+    record = client.get(f"/api/inspections/{inspection['id']}").json()
+    assert record["status"] == "ready"
+    for file in directory.iterdir():
+        file.unlink()
+    report = client.get(f"/api/inspections/{inspection['id']}/reports/{record['current_assessment_id']}.pdf")
+    assert report.status_code == 200
+    assert report.content.startswith(b"%PDF")
+    assert len(list(directory.iterdir())) == 2
+
+
 def test_bootstrap_accounts_are_private_and_do_not_overwrite_users(app, monkeypatch):
     from app.security import hash_password
     from app.users import bootstrap_users
